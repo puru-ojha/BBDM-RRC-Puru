@@ -17,6 +17,7 @@ class Register:
             logging.warning("Key %s already in registry %s." % (key, self.__name__))
         self.dict[key] = value
 
+
     def register_with_name(self, name):
         def register(target):
             def add(key, value):
