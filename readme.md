@@ -9,7 +9,7 @@ https://arxiv.org/abs/2205.07680
 
 ## Requirements
 ```commandline
-cond env create -f environment.yml
+conda env create -f environment.yml
 conda activate BBDM
 ```
 
