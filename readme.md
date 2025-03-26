@@ -9,8 +9,15 @@ https://arxiv.org/abs/2205.07680
 
 ## Requirements
 ```commandline
-conda env create -f environment.yml
+conda env create -f environment.yml (will prolly be breaking)
+
 conda activate BBDM
+
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+pip install -r requirements.txt --no-deps
+
+pip install torchmetrics torchsummary
+
 ```
 
 ## Data preparation

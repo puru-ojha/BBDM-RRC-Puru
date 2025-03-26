@@ -3,6 +3,7 @@ import shutil
 import random
 
 def split_dataset(folder_A, folder_B, output_folder, train_ratio=0.8, val_ratio=0.1, test_ratio=0.1):
+    
     assert train_ratio + val_ratio + test_ratio == 1, "Ratios must sum to 1"
     
     images_A = sorted([f for f in os.listdir(folder_A) if f.endswith(('.png', '.jpg', '.jpeg'))])
