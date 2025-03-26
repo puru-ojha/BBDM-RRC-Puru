@@ -20,6 +20,15 @@ pip install torchmetrics torchsummary
 
 ```
 
+## Setting it up 
+
+1. Download the pretrained weights VQGAN-4: https://ommer-lab.com/files/latent-diffusion/vq-f4.zip and place it in `/results/pretrained-VQGAN`
+2. Download the paired data from https://iiithydstudents-my.sharepoint.com/:f:/g/personal/aniruth_suresh_students_iiit_ac_in/EjjPksy84dxIkyRlGDXjivcB86gBIngi9xf-7GQBansUvA?e=KikImy and place it in a `/data` folder 
+3. Change the data path and the checkpoint path in the `/config/Template-LBBDM-f4.yaml` and also in the `train.sh` script 
+
+
+
+
 ## Data preparation
 ### Paired translation task
 For datasets that have paired image data, the path should be formatted as:
