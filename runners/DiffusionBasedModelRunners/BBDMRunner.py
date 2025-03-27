@@ -259,6 +259,7 @@ class BBDMRunner(DiffusionBaseRunner):
                         save_single_image(result, result_path, f'{x_name[i]}.png', to_normal=to_normal)
 
 
+
     # @torch.no_grad()
     # def sample_to_eval(self, net, test_loader, sample_path):
 
