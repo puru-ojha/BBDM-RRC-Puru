@@ -342,10 +342,13 @@ class BaseRunner(ABC):
         train_sampler = None
         val_sampler = None
         test_sampler = None
+
         if self.config.training.use_DDP:
+
             train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset)
             val_sampler = torch.utils.data.distributed.DistributedSampler(val_dataset)
             test_sampler = torch.utils.data.distributed.DistributedSampler(test_dataset)
+            
             train_loader = DataLoader(train_dataset,
                                       batch_size=self.config.data.train.batch_size,
                                       num_workers=8,
