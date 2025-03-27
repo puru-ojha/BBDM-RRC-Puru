@@ -111,7 +111,7 @@ class BrownianBridgeModel(nn.Module):
         x_t, objective = self.q_sample(x0, y, t, noise)
         objective_recon = self.denoise_fn(x_t, timesteps=t, context=context)
 
-        if self.loss_type == 'l1':
+        if self.loss_type == 'l1': # this is the default one !
             recloss = (objective - objective_recon).abs().mean()
         elif self.loss_type == 'l2':
             recloss = F.mse_loss(objective, objective_recon)
@@ -119,10 +119,12 @@ class BrownianBridgeModel(nn.Module):
             raise NotImplementedError()
 
         x0_recon = self.predict_x0_from_objective(x_t, y, t, objective_recon)
+
         log_dict = {
             "loss": recloss,
             "x0_recon": x0_recon
         }
+
         return recloss, log_dict
 
     def q_sample(self, x0, y, t, noise=None):
