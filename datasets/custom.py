@@ -45,9 +45,9 @@ class CustomAlignedDataset(Dataset):
         )
         mask_paths_ori = (
             get_image_paths_from_dir(
-                os.path.join(dataset_config.dataset_path, f"{stage}/B-msk")
+                os.path.join(dataset_config.dataset_path, f"{stage}/B-masks")
             )
-            if stage != "test"
+            if stage == "train"
             else None
         )
 
@@ -56,9 +56,9 @@ class CustomAlignedDataset(Dataset):
         )
         mask_paths_cond = (
             get_image_paths_from_dir(
-                os.path.join(dataset_config.dataset_path, f"{stage}/A-msk")
+                os.path.join(dataset_config.dataset_path, f"{stage}/A-masks")
             )
-            if stage != "test"
+            if stage == "train"
             else None
         )
 
