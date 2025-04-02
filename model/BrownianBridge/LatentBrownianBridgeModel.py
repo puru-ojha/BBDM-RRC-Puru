@@ -58,16 +58,17 @@ class LatentBrownianBridgeModel(BrownianBridgeModel):
             self.cond_stage_model.apply(weights_init)
         return self
 
-    def _context_loss(self, x_t_latent, x, target_mask, lbda: float = 3.0):
-        target_mask = target_mask.to(x_t_latent.device)
+    def _context_loss(self, x0_recon_latent, x, target_mask, lbda: float = 3.0):
+        target_mask = target_mask.to(x0_recon_latent.device)
 
-        decoded_image = self.decode(x_t_latent, cond=False)
+        decoded_image = self.decode(x0_recon_latent, cond=False)
         loss = (
             torch.nn.functional.l1_loss(
                 decoded_image * (1 - target_mask), x * (1 - target_mask)
             )
             * lbda
         )
+        print("context loss", loss.item())
 
         return loss
 
@@ -76,10 +77,11 @@ class LatentBrownianBridgeModel(BrownianBridgeModel):
             x_latent = self.encode(x, cond=False)
             x_cond_latent = self.encode(x_cond, cond=True)
         context = self.get_cond_stage_context(x_cond)
-        loss, log_dict, x_t = super().forward(
+        loss, log_dict, x0_recon = super().forward(
             x_latent.detach(), x_cond_latent.detach(), context
         )
-        loss += self._context_loss(x_t, x, x_mask)
+        print("recloss: ", loss.item())
+        loss += self._context_loss(x0_recon, x, x_mask)
 
         return loss, log_dict
 

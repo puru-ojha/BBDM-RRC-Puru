@@ -144,7 +144,7 @@ class BrownianBridgeModel(nn.Module):
 
         log_dict = {"loss": recloss, "x0_recon": x0_recon}
 
-        return recloss, log_dict, x_t
+        return recloss, log_dict, x0_recon
 
     def q_sample(self, x0, y, t, noise=None):
         noise = default(noise, lambda: torch.randn_like(x0))
@@ -271,4 +271,3 @@ class BrownianBridgeModel(nn.Module):
     @torch.no_grad()
     def sample(self, y, context=None, clip_denoised=True, sample_mid_step=False):
         return self.p_sample_loop(y, context, clip_denoised, sample_mid_step)
-
