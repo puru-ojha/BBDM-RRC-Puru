@@ -43,17 +43,33 @@ class CustomAlignedDataset(Dataset):
         image_paths_ori = get_image_paths_from_dir(
             os.path.join(dataset_config.dataset_path, f"{stage}/B")
         )
+        mask_paths_ori = get_image_paths_from_dir(
+            os.path.join(dataset_config.dataset_path, f"{stage}/B-trg-msk")
+        )
+
         image_paths_cond = get_image_paths_from_dir(
             os.path.join(dataset_config.dataset_path, f"{stage}/A")
         )
+        mask_paths_cond = get_image_paths_from_dir(
+            os.path.join(dataset_config.dataset_path, f"{stage}/A-trg-msk")
+        )
+
         self.flip = dataset_config.flip if stage == "train" else False
         self.to_normal = dataset_config.to_normal
 
         self.imgs_ori = ImagePathDataset(
-            image_paths_ori, self.image_size, flip=self.flip, to_normal=self.to_normal
+            image_paths_ori,
+            mask_paths_ori,
+            self.image_size,
+            flip=self.flip,
+            to_normal=self.to_normal,
         )
         self.imgs_cond = ImagePathDataset(
-            image_paths_cond, self.image_size, flip=self.flip, to_normal=self.to_normal
+            image_paths_cond,
+            mask_paths_cond,
+            self.image_size,
+            flip=self.flip,
+            to_normal=self.to_normal,
         )
 
     def __len__(self):

@@ -8,12 +8,14 @@ class ImagePathDataset(Dataset):
     def __init__(
         self,
         image_paths,
+        target_mask_paths,
         image_size=(256, 256),
         flip=False,
         to_normal=False,
     ):
         self.image_size = image_size
         self.image_paths = image_paths
+        self.target_mask_paths = target_mask_paths
         self._length = len(image_paths)
         self.flip = flip
         self.to_normal = to_normal  # 是否归一化到[-1, 1]
@@ -38,20 +40,34 @@ class ImagePathDataset(Dataset):
         )
 
         img_path = self.image_paths[index]
+        mask_path = self.target_mask_paths[index]
         image = None
+        mask = None
         try:
             image = Image.open(img_path)
+            mask = Image.open(mask_path)
         except BaseException as e:
             print(img_path)
 
+        assert type(image) is Image.Image
+        assert type(mask) is Image.Image
+
         if not image.mode == "RGB":
             image = image.convert("RGB")
+        if not mask.mode == "L":
+            mask = mask.convert("L")
 
         image = transform(image)
+        mask = transform(mask)
 
         if self.to_normal:
             image = (image - 0.5) * 2.0
             image.clamp_(-1.0, 1.0)
 
+            mask = (mask - 0.5) * 2.0
+            mask.clamp_(-1.0, 1.0)
+
         image_name = Path(img_path).stem
-        return image, image_name
+        mask_name = Path(mask_path).stem
+
+        return image, image_name, mask, mask_name
