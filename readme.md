@@ -23,10 +23,8 @@ pip install torchmetrics torchsummary
 ## Setting it up 
 
 1. Download the pretrained weights VQGAN-4: https://ommer-lab.com/files/latent-diffusion/vq-f4.zip and place it in `/results/pretrained-VQGAN`
-2. Download the paired data from https://iiithydstudents-my.sharepoint.com/:f:/g/personal/aniruth_suresh_students_iiit_ac_in/EjjPksy84dxIkyRlGDXjivcB86gBIngi9xf-7GQBansUvA?e=KikImy and place it in a `/data` folder 
+2. Download the paired data from https://iiithydstudents-my.sharepoint.com/personal/aniruth_suresh_students_iiit_ac_in/_layouts/15/onedrive.aspx?id=%2Fpersonal%2Faniruth%5Fsuresh%5Fstudents%5Fiiit%5Fac%5Fin%2FDocuments%2FSimulation%20paired%20data%20%2D%20mask%20and%20images%2Ftest&ga=1 and place it in a `/data` folder 
 3. Change the data path and the checkpoint path in the `/config/Template-LBBDM-f4.yaml` and also in the `train.sh` script 
-
-
 
 
 ## Data preparation

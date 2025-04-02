@@ -51,8 +51,6 @@ class ImagePathDataset(Dataset):
         except BaseException as e:
             print(img_path)
 
-        assert type(image) is Image.Image
-
         if not image.mode == "RGB":
             image = image.convert("RGB")
         if mask and (not mask.mode == "L"):
@@ -73,4 +71,5 @@ class ImagePathDataset(Dataset):
         image_name = Path(img_path).stem
         mask_name = Path(mask_path).stem if mask_path else None
 
+        # NOTE: mask and name are None in case of valid and test sets
         return image, image_name, mask, mask_name
