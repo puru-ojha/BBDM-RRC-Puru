@@ -8,7 +8,7 @@ class ImagePathDataset(Dataset):
     def __init__(
         self,
         image_paths,
-        target_mask_paths=None,
+        target_mask_paths,
         image_size=(256, 256),
         flip=False,
         to_normal=False,
@@ -40,14 +40,13 @@ class ImagePathDataset(Dataset):
         )
 
         img_path = self.image_paths[index]
-        mask_path = self.target_mask_paths[index] if self.target_mask_paths else None
+        mask_path = self.target_mask_paths[index]
 
         image = None
         mask = None
         try:
             image = Image.open(img_path)
-            if mask_path is not None:
-                mask = Image.open(mask_path)
+            mask = Image.open(mask_path)
         except BaseException as e:
             print(img_path)
 
@@ -57,16 +56,14 @@ class ImagePathDataset(Dataset):
             mask = mask.convert("L")
 
         image = transform(image)
-        if mask is not None:
-            mask = transform(mask)
+        mask = transform(mask)
 
         if self.to_normal:
             image = (image - 0.5) * 2.0
             image.clamp_(-1.0, 1.0)
 
-            if mask is not None:
-                mask = (mask - 0.5) * 2.0
-                mask.clamp_(-1.0, 1.0)
+            mask = (mask - 0.5) * 2.0
+            mask.clamp_(-1.0, 1.0)
 
         image_name = Path(img_path).stem
         mask_name = Path(mask_path).stem if mask_path else None
