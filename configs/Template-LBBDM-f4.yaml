@@ -14,22 +14,22 @@ testing:
   sample_num: 5
 
 data:
-  dataset_name: 'xarm2panda'
-  dataset_type: 'custom_aligned'
+  dataset_name: "xarm2panda"
+  dataset_type: "custom_aligned"
   dataset_config:
-    dataset_path: '/home2/aniruth.suresh/BBDM-RRC/data' # change 2 rel path later 
+    dataset_path: "/home2/aniruth.suresh/BBDM-RRC/data" # change 2 rel path later
     image_size: 256
     channels: 3
     to_normal: True
     flip: False
   train:
-    batch_size: 8
+    batch_size: 4
     shuffle: True
   val:
-    batch_size: 8
+    batch_size: 4
     shuffle: True
   test:
-    batch_size: 8
+    batch_size: 4
     # shuffle: False
 
 model:
@@ -54,7 +54,7 @@ model:
 
   VQGAN:
     params:
-      ckpt_path: '/home2/aniruth.suresh/BBDM-RRC/results/pretrained-VQGAN/vq-f4/model.ckpt'
+      ckpt_path: "/home2/aniruth.suresh/BBDM-RRC/results/pretrained-VQGAN/vq-f4/model.ckpt"
       embed_dim: 3
       n_embed: 8192
       ddconfig:
@@ -69,7 +69,7 @@ model:
           - 2
           - 4
         num_res_blocks: 2
-        attn_resolutions: [ ]
+        attn_resolutions: []
         dropout: 0.0
 
       lossconfig:
@@ -78,7 +78,7 @@ model:
   BB:
     optimizer:
       weight_decay: 0.000
-      optimizer: 'Adam'
+      optimizer: "Adam"
       lr: 1.e-4
       beta1: 0.9
 
@@ -90,12 +90,12 @@ model:
       min_lr: 5.e-7
 
     params:
-      mt_type: 'linear' # options {'linear', 'sin'}
-      objective: 'grad' # options {'grad', 'noise', 'ysubx'}
-      loss_type: 'l1' # options {'l1', 'l2'}
+      mt_type: "linear" # options {'linear', 'sin'}
+      objective: "grad" # options {'grad', 'noise', 'ysubx'}
+      loss_type: "l1" # options {'l1', 'l2'}
 
       skip_sample: True
-      sample_type: 'linear' # options {"linear", "sin"}
+      sample_type: "linear" # options {"linear", "sin"}
       sample_step: 200
 
       num_timesteps: 1000 # timesteps
