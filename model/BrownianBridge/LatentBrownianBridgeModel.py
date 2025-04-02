@@ -66,6 +66,7 @@ class LatentBrownianBridgeModel(BrownianBridgeModel):
             decoded_image * (1 - target_mask), x * (1 - target_mask)
         )
 
+        print("context loss: ", loss.item())
         return loss
 
     def forward(self, x, x_mask, x_cond, context=None):
@@ -76,6 +77,8 @@ class LatentBrownianBridgeModel(BrownianBridgeModel):
         loss, log_dict, x_t = super().forward(
             x_latent.detach(), x_cond_latent.detach(), context
         )
+        print("recloss: ", loss.item())
+
         loss += self._context_loss(x_t, x, x_mask)
 
         return loss, log_dict
