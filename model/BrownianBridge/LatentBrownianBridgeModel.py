@@ -58,12 +58,24 @@ class LatentBrownianBridgeModel(BrownianBridgeModel):
             self.cond_stage_model.apply(weights_init)
         return self
 
-    def forward(self, x, x_cond, context=None):
+    def _context_loss(self, x_t_latent, x, target_mask):
+        decoded_image = self.decode(x_t_latent, cond=False)
+        loss = torch.nn.functional.l1_loss(
+            decoded_image * (1 - target_mask), x * (1 - target_mask)
+        )
+        return loss
+
+    def forward(self, x, x_mask, x_cond, context=None):
         with torch.no_grad():
             x_latent = self.encode(x, cond=False)
             x_cond_latent = self.encode(x_cond, cond=True)
         context = self.get_cond_stage_context(x_cond)
-        return super().forward(x_latent.detach(), x_cond_latent.detach(), context)
+        loss, log_dict, x_t = super().forward(
+            x_latent.detach(), x_cond_latent.detach(), context
+        )
+        loss += self._context_loss(x_t, x, x_mask)
+
+        return loss, log_dict
 
     def get_cond_stage_context(self, x_cond):
         if self.cond_stage_model is not None:
