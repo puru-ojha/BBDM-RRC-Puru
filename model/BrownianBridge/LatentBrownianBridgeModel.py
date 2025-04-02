@@ -59,9 +59,7 @@ class LatentBrownianBridgeModel(BrownianBridgeModel):
         return self
 
     def _context_loss(self, x_t_latent, x, target_mask):
-        print(x_t_latent.device)
-        print(x.device)
-        print(target_mask.device)
+        target_mask = target_mask.to(x_t_latent.device)
 
         decoded_image = self.decode(x_t_latent, cond=False)
         loss = torch.nn.functional.l1_loss(
