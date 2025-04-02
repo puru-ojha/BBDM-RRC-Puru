@@ -65,6 +65,9 @@ class LatentBrownianBridgeModel(BrownianBridgeModel):
         loss = torch.nn.functional.l1_loss(
             decoded_image * (1 - target_mask), x * (1 - target_mask)
         )
+
+        target_mask = target_mask.to("cpu")
+
         return loss
 
     def forward(self, x, x_mask, x_cond, context=None):
