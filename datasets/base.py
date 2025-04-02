@@ -57,14 +57,14 @@ class ImagePathDataset(Dataset):
             mask = mask.convert("L")
 
         image = transform(image)
-        if mask:
+        if mask is not None:
             mask = transform(mask)
 
         if self.to_normal:
             image = (image - 0.5) * 2.0
             image.clamp_(-1.0, 1.0)
 
-            if mask:
+            if mask is not None:
                 mask = (mask - 0.5) * 2.0
                 mask.clamp_(-1.0, 1.0)
 
