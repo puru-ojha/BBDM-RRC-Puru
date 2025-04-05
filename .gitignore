@@ -11,3 +11,11 @@ __pycache__/
 /arm-green
 /data_small
 
+/Simulation-mask-paired-data-small-local
+/green-bg-only-arm-results
+
+/configs
+
+*.pyc
+__pycache__/
+**/__pycache__/

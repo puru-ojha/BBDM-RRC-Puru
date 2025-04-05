@@ -152,7 +152,7 @@ class BrownianBridgeModel(nn.Module):
         var_t = extract(self.variance_t, t, x0.shape)
         sigma_t = torch.sqrt(var_t)
 
-        if self.objective == "grad":
+        if self.objective == "grad": 
             objective = m_t * (y - x0) + sigma_t * noise
         elif self.objective == "noise":
             objective = noise

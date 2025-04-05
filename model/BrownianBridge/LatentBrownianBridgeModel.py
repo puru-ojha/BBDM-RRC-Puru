@@ -163,7 +163,8 @@ class LatentBrownianBridgeModel(BrownianBridgeModel):
                     out = self.decode(one_step_temp[i].detach(), cond=False)
                 one_step_samples.append(out.to("cpu"))
             return out_samples, one_step_samples
-        else:
+        else: 
+            # model's output (domain Y) during evals 
             temp = self.p_sample_loop(
                 y=x_cond_latent,
                 context=self.get_cond_stage_context(x_cond),

@@ -314,7 +314,6 @@ class BBDMRunner(DiffusionBaseRunner):
             for j in range(sample_num):
                 sample = net.sample(x_cond, clip_denoised=False)
                 # sample = net.sample_vqgan(x)
-
                 for i in range(batch_size):
                     condition = x_cond[i].detach().clone()
                     gt = x[i]

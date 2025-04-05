@@ -35,7 +35,7 @@ class ImagePathDataset(Dataset):
             [
                 transforms.RandomHorizontalFlip(p=p),
                 transforms.Resize(self.image_size),
-                transforms.ToTensor(),
+                transforms.ToTensor(), # scales it from 0 to 1 
             ]
         )
 
