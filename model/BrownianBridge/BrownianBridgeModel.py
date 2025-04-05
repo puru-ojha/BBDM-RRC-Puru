@@ -144,7 +144,7 @@ class BrownianBridgeModel(nn.Module):
 
         log_dict = {"loss": recloss, "x0_recon": x0_recon}
 
-        return recloss, log_dict, x0_recon
+        return recloss, log_dict, objective_recon
 
     def q_sample(self, x0, y, t, noise=None):
         noise = default(noise, lambda: torch.randn_like(x0))
