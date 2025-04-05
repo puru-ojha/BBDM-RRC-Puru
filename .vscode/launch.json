@@ -1,0 +1,29 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "Debug BBDM Training",
+        "type": "python",
+        "request": "launch",
+        "program": "${workspaceFolder}/main.py",
+        "args": [
+          "--config", "/home/aniruth/Desktop/RRC/BBDM-RRC/configs/Template-LBBDM-f4.yaml",
+          "--train",
+          "--sample_at_start",
+          "--save_top",
+          "--gpu_ids", "0"
+        ],
+        "console": "integratedTerminal",
+        "justMyCode": false,
+        "env": {
+          "PYTHONPATH": "${workspaceFolder}"
+        },
+        "cwd": "${workspaceFolder}",
+        "python": "/home/aniruth/miniconda3/envs/BBDM/bin/python"
+      }
+    ]
+  }
+  
+
+
+  

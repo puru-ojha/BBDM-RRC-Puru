@@ -6,3 +6,10 @@ __pycache__/
 /sample_to_eval
 /results-2
 
+/arm-green
+/data_small
+/green-bg-only-arm-results
+/Simulation-mask-paired-data
+/Simulation-mask-paired-data-small-local
+
+/test
