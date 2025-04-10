@@ -19,3 +19,9 @@ __pycache__/
 *.pyc
 __pycache__/
 **/__pycache__/
+
+/arm-colored
+/save-checkpoint-green-bg
+
+/test
+
