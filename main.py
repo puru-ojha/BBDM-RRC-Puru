@@ -32,6 +32,10 @@ def parse_args_and_config():
     parser.add_argument('--max_epoch', type=int, default=None, help='optimizer checkpoint')
     parser.add_argument('--max_steps', type=int, default=None, help='optimizer checkpoint')
 
+    parser.add_argument("--wandb_project", type=str, default="YourProjectName", help="WandB project name")
+    parser.add_argument("--wandb_run_name", type=str, default="YourRunName", help="WandB run name")
+
+
     args = parser.parse_args()
 
     with open(args.config, 'r') as f:
