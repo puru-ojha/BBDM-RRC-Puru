@@ -76,11 +76,10 @@ class LatentBrownianBridgeModel(BrownianBridgeModel):
         # x_cond = x_T = xArm image
 
         with torch.no_grad():
-
             x_latent = self.encode(x, cond=False)
             x_cond_latent = self.encode(x_cond, cond=True)
 
-        context = self.get_cond_stage_context(x_cond) # None
+        context = self.get_cond_stage_context(x_cond)  # None
 
         loss, log_dict = super().forward(
             x_latent.detach(), x_cond_latent.detach(), context
@@ -88,7 +87,7 @@ class LatentBrownianBridgeModel(BrownianBridgeModel):
 
         x0_recon = log_dict["x0_recon"]
 
-        context_loss = self._context_loss(x0_recon, x, x_mask,lambda_context)
+        context_loss = self._context_loss(x0_recon, x, x_mask, lambda_context)
 
         print(
             f"loss: {loss.item()}, context_loss: {context_loss.item()}, lambda_context: {lambda_context}"
@@ -123,7 +122,6 @@ class LatentBrownianBridgeModel(BrownianBridgeModel):
                 x_latent = (x_latent - self.ori_latent_mean) / self.ori_latent_std
         return x_latent
 
-    @torch.no_grad()
     def decode(self, x_latent, cond=True, normalize=None):
         normalize = (
             self.model_config.normalize_latent if normalize is None else normalize
