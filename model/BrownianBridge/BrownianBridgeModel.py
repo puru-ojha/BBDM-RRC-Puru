@@ -114,37 +114,43 @@ class BrownianBridgeModel(nn.Module):
         assert (
             h == img_size and w == img_size
         ), f"height and width of image must be {img_size}"
+
         t = torch.randint(0, self.num_timesteps, (b,), device=device).long()
+
         return self.p_losses(x, y, context, t)
 
     def p_losses(self, x0, y, context, t, noise=None):
         """
         model loss
-        :param x0: encoded x_ori, E(x_ori) = x0
+        :param x0: encoded x_ori, E(x_ori) = x0 
         :param y: encoded y_ori, E(y_ori) = y
         :param y_ori: original source domain image
         :param t: timestep
         :param noise: Standard Gaussian Noise
         :return: loss
         """
+
         b, c, h, w = x0.shape
         noise = default(noise, lambda: torch.randn_like(x0))
 
-        x_t, objective = self.q_sample(x0, y, t, noise)
+        x_t, objective = self.q_sample(x0, y, t, noise) # x_t = x0 + objective 
+
         objective_recon = self.denoise_fn(x_t, timesteps=t, context=context)
 
         if self.loss_type == "l1":  # this is the default one !
             recloss = (objective - objective_recon).abs().mean()
+
         elif self.loss_type == "l2":
             recloss = F.mse_loss(objective, objective_recon)
         else:
             raise NotImplementedError()
 
-        x0_recon = self.predict_x0_from_objective(x_t, y, t, objective_recon)
+        x0_recon = self.predict_x0_from_objective(x_t, y, t, objective_recon) # x0_recon = x_t - objective_recon
 
         log_dict = {"loss": recloss, "x0_recon": x0_recon}
 
         return recloss, log_dict, objective_recon
+
 
     def q_sample(self, x0, y, t, noise=None):
         noise = default(noise, lambda: torch.randn_like(x0))
@@ -211,9 +217,11 @@ class BrownianBridgeModel(nn.Module):
             )
 
             objective_recon = self.denoise_fn(x_t, timesteps=t, context=context)
+            
             x0_recon = self.predict_x0_from_objective(
                 x_t, y, t, objective_recon=objective_recon
             )
+
             if clip_denoised:
                 x0_recon.clamp_(-1.0, 1.0)
 
@@ -227,6 +235,7 @@ class BrownianBridgeModel(nn.Module):
             sigma_t = torch.sqrt(sigma2_t) * self.eta
 
             noise = torch.randn_like(x_t)
+
             x_tminus_mean = (
                 (1.0 - m_nt) * x0_recon
                 + m_nt * y
