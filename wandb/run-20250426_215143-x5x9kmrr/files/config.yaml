@@ -1,0 +1,50 @@
+_wandb:
+    value:
+        cli_version: 0.19.10
+        m: []
+        python_version: 3.9.16
+        t:
+            "1":
+                - 1
+                - 9
+                - 11
+                - 41
+                - 49
+                - 51
+                - 55
+                - 103
+            "2":
+                - 1
+                - 9
+                - 11
+                - 41
+                - 49
+                - 51
+                - 55
+                - 103
+            "3":
+                - 13
+                - 16
+                - 23
+                - 55
+            "4": 3.9.16
+            "5": 0.19.10
+            "6": 4.26.1
+            "8":
+                - 5
+            "12": 0.19.10
+            "13": linux-x86_64
+args:
+    value: Namespace(config='/home/aniruth/Desktop/RRC/BBDM-RRC/configs/Template-LBBDM-f4-v.yaml', seed=1234, result_path='results', train=True, sample_to_eval=False, sample_at_start=True, save_top=True, gpu_ids='0', port='12355', resume_model=None, resume_optim=None, max_epoch=None, max_steps=None, wandb_project='YourProjectName', wandb_run_name='YourRunName')
+data:
+    value: Namespace(dataset_name='xarm2panda', dataset_type='custom_aligned', dataset_config=Namespace(dataset_path='/home/aniruth/Desktop/RRC/BBDM-RRC/Simulation-mask-paired-data-small-local', image_size=256, channels=3, to_normal=True, flip=False), train=Namespace(batch_size=8, shuffle=True), val=Namespace(batch_size=8, shuffle=True), test=Namespace(batch_size=8))
+model:
+    value: Namespace(model_name='LBBDM-f4', model_type='LBBDM', latent_before_quant_conv=False, normalize_latent=False, only_load_latent_mean_std=False, EMA=Namespace(use_ema=True, ema_decay=0.995, update_ema_interval=8, start_ema_step=30000), CondStageParams=Namespace(n_stages=2, in_channels=3, out_channels=3), VQGAN=Namespace(params=Namespace(ckpt_path='/home/aniruth/Desktop/RRC/BBDM-RRC/results/pretrained-VQGAN/vq-f4/model.ckpt', embed_dim=3, n_embed=8192, ddconfig=Namespace(double_z=False, z_channels=3, resolution=256, in_channels=3, out_ch=3, ch=128, ch_mult=(1, 2, 4), num_res_blocks=2, attn_resolutions=[], dropout=0.0), lossconfig=Namespace(target='torch.nn.Identity'))), BB=Namespace(optimizer=Namespace(weight_decay=0.0, optimizer='Adam', lr=0.0001, beta1=0.9), lr_scheduler=Namespace(factor=0.5, patience=3000, threshold=0.0001, cooldown=3000, min_lr=5e-07), params=Namespace(mt_type='linear', objective='grad', loss_type='l1', skip_sample=True, sample_type='linear', sample_step=200, num_timesteps=1000, eta=1.0, max_var=1.0, UNetParams=Namespace(image_size=64, in_channels=3, model_channels=128, out_channels=3, num_res_blocks=2, attention_resolutions=(32, 16, 8), channel_mult=(1, 4, 8), conv_resample=True, dims=2, num_heads=8, num_head_channels=64, use_scale_shift_norm=True, resblock_updown=True, use_spatial_transformer=False, context_dim=None, condition_key='nocond'))))
+result:
+    value: Namespace(result_path='results/xarm2panda/LBBDM-f4/', image_path='results/xarm2panda/LBBDM-f4/image', ckpt_path='results/xarm2panda/LBBDM-f4/checkpoint', log_path='results/xarm2panda/LBBDM-f4/log', sample_path='results/xarm2panda/LBBDM-f4/samples', sample_to_eval_path='results/xarm2panda/LBBDM-f4/sample_to_eval')
+runner:
+    value: BBDMRunner
+testing:
+    value: Namespace(clip_denoised=False, sample_num=5)
+training:
+    value: Namespace(n_epochs=100, n_steps=200000, save_interval=2, sample_interval=2, validation_interval=2, accumulate_grad_batches=4, use_DDP=False, device=[device(type='cuda', index=0)])

@@ -13,7 +13,6 @@ from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from torch.nn.parallel import DistributedDataParallel as DDP
 
-import wandb
 from abc import ABC, abstractmethod
 from tqdm.autonotebook import tqdm
 
@@ -78,14 +77,6 @@ class BaseRunner(ABC):
         else:
             self.net = self.net.to(self.config.training.device[0])
         # self.ema.reset_device(self.net)
-
-        if self.is_main_process:  # Only initialize wandb on the main process
-
-            wandb.init(
-                project=config.args.wandb_project,  # Add this to your config
-                name=config.args.wandb_run_name,    # Add this to your config
-                config=config,                     # Log the entire config
-            )
 
 
     # print msg
@@ -471,14 +462,7 @@ class BaseRunner(ABC):
                 elapsed_rounded = int(round((end_time-start_time)))
                 self.logger("training time: " + str(datetime.timedelta(seconds=elapsed_rounded)))
 
-                epoch_loss = sum(losses) / len(losses) # loss for 1 full epoch !
-
-                if self.is_main_process:
-                    wandb.log({
-                        "train/loss": epoch_loss.item(),
-                        "epoch": epoch + 1,
-                        "step": self.global_step,
-                    })
+          
 
                 # validation
                 if (epoch + 1) % self.config.training.validation_interval == 0 or (
@@ -487,11 +471,7 @@ class BaseRunner(ABC):
                     with torch.no_grad():
                         self.logger("validating epoch...")
                         average_loss = self.validation_epoch(val_loader, epoch)
-                        if self.is_main_process:
-                            wandb.log({
-                                "val/loss": average_loss.item(),
-                                "epoch": epoch + 1,
-                            })
+                
                         torch.cuda.empty_cache()
                         self.logger("validating epoch success")
 

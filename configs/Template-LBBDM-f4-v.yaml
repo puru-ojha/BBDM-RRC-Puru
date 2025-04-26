@@ -17,7 +17,7 @@ data:
   dataset_name: "xarm2panda"
   dataset_type: "custom_aligned"
   dataset_config:
-    dataset_path: "/home2/varun.edachali/BBDM-RRC/data" # change 2 rel path later
+    dataset_path: "/home/aniruth/Desktop/RRC/BBDM-RRC/Simulation-mask-paired-data-small-local" # change 2 rel path later
     image_size: 256
     channels: 3
     to_normal: True
@@ -54,7 +54,7 @@ model:
 
   VQGAN:
     params:
-      ckpt_path: "/home2/varun.edachali/BBDM-RRC/results/pretrained-VQGAN/vq-f4/model.ckpt"
+      ckpt_path: "/home/aniruth/Desktop/RRC/BBDM-RRC/results/pretrained-VQGAN/vq-f4/model.ckpt"
       embed_dim: 3
       n_embed: 8192
       ddconfig:
