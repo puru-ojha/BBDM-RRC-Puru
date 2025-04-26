@@ -72,16 +72,20 @@ class LatentBrownianBridgeModel(BrownianBridgeModel):
         return loss
 
     def forward(self, x, x_mask, x_cond, context=None):
+        # x = x_0 = franka image
+        # x_cond = x_T = xArm image
         with torch.no_grad():
             x_latent = self.encode(x, cond=False)
             x_cond_latent = self.encode(x_cond, cond=True)
         context = self.get_cond_stage_context(x_cond)
 
-        loss, log_dict, obj_recon = super().forward(
+        loss, log_dict = super().forward(
             x_latent.detach(), x_cond_latent.detach(), context
         )
+        x0_recon = log_dict["x0_recon"]
+        context_loss = self._context_loss(x0_recon, x, x_mask)
 
-        loss += self._context_loss(obj_recon, x, x_mask)
+        loss += context_loss
 
         return loss, log_dict
 
@@ -161,8 +165,8 @@ class LatentBrownianBridgeModel(BrownianBridgeModel):
                     out = self.decode(one_step_temp[i].detach(), cond=False)
                 one_step_samples.append(out.to("cpu"))
             return out_samples, one_step_samples
-        else: 
-            # model's output (domain Y) during evals 
+        else:
+            # model's output (domain Y) during evals
             temp = self.p_sample_loop(
                 y=x_cond_latent,
                 context=self.get_cond_stage_context(x_cond),
