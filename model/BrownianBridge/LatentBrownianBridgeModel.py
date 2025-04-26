@@ -81,6 +81,9 @@ class LatentBrownianBridgeModel(BrownianBridgeModel):
             x_latent.detach(), x_cond_latent.detach(), context
         )
 
+        # x = x_latent = souce image 
+        # y = x_cond_latent = target image 
+
         loss += self._context_loss(obj_recon, x, x_mask)
 
         return loss, log_dict

@@ -237,7 +237,8 @@ class BrownianBridgeModel(nn.Module):
             return x_tminus_mean + sigma_t * noise, x0_recon
 
     @torch.no_grad()
-    def p_sample_loop(self, y, context=None, clip_denoised=True, sample_mid_step=False): # y = x_cond_latent = input latent 
+    def p_sample_loop(self, y, context=None, clip_denoised=True, sample_mid_step=False): 
+
         if self.condition_key == "nocond":
             context = None
         else:
