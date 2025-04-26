@@ -149,7 +149,7 @@ class BrownianBridgeModel(nn.Module):
 
         log_dict = {"loss": recloss, "x0_recon": x0_recon}
 
-        return recloss, log_dict, objective_recon
+        return recloss, log_dict
 
 
     def q_sample(self, x0, y, t, noise=None):
@@ -158,7 +158,7 @@ class BrownianBridgeModel(nn.Module):
         var_t = extract(self.variance_t, t, x0.shape)
         sigma_t = torch.sqrt(var_t)
 
-        if self.objective == "grad": 
+        if self.objective == "grad":
             objective = m_t * (y - x0) + sigma_t * noise
         elif self.objective == "noise":
             objective = noise
@@ -167,6 +167,7 @@ class BrownianBridgeModel(nn.Module):
         else:
             raise NotImplementedError()
 
+        # equation 3 / algorithm 1 line 5
         return ((1.0 - m_t) * x0 + m_t * y + sigma_t * noise, objective)
 
     def predict_x0_from_objective(self, x_t, y, t, objective_recon):
@@ -246,8 +247,9 @@ class BrownianBridgeModel(nn.Module):
             return x_tminus_mean + sigma_t * noise, x0_recon
 
     @torch.no_grad()
-    def p_sample_loop(self, y, context=None, clip_denoised=True, sample_mid_step=False): 
-
+    def p_sample_loop(
+        self, y, context=None, clip_denoised=True, sample_mid_step=False
+    ):  # y = x_cond_latent = input latent
         if self.condition_key == "nocond":
             context = None
         else:
