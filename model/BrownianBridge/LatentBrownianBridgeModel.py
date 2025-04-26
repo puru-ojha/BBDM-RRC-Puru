@@ -74,6 +74,7 @@ class LatentBrownianBridgeModel(BrownianBridgeModel):
     def forward(self, x, x_mask, x_cond, context=None):
         # x = x_0 = franka image
         # x_cond = x_T = xArm image
+        
         with torch.no_grad():
 
             x_latent = self.encode(x, cond=False)
