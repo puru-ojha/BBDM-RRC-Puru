@@ -153,6 +153,7 @@ class BrownianBridgeModel(nn.Module):
 
 
     def q_sample(self, x0, y, t, noise=None):
+        
         noise = default(noise, lambda: torch.randn_like(x0))
         m_t = extract(self.m_t, t, x0.shape)
         var_t = extract(self.variance_t, t, x0.shape)
