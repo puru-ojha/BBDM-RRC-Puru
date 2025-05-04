@@ -58,10 +58,8 @@ class LatentBrownianBridgeModel(BrownianBridgeModel):
             self.cond_stage_model.apply(weights_init)
         return self
 
-    def _context_loss(self, pred_latent, x, target_mask, lbda: float = 1.0):
-        target_mask = target_mask.to(pred_latent.device)
-
-        decoded_image = self.decode(pred_latent, cond=False)
+    def _context_loss(self, decoded_image, x, target_mask, lbda: float = 1.0):
+        
         loss = (
             torch.nn.functional.l1_loss(
                 decoded_image * (1 - target_mask), x * (1 - target_mask)
@@ -70,32 +68,6 @@ class LatentBrownianBridgeModel(BrownianBridgeModel):
         )
 
         return loss
-
-    # def forward(self, x, x_mask, x_cond, context=None, lambda_context=1.0):
-    #     # x = x_0 = franka image
-    #     # x_cond = x_T = xArm image
-
-    #     with torch.no_grad():
-    #         x_latent = self.encode(x, cond=False)
-    #         x_cond_latent = self.encode(x_cond, cond=True)
-
-    #     context = self.get_cond_stage_context(x_cond)  # None
-
-    #     loss, log_dict = super().forward(
-    #         x_latent.detach(), x_cond_latent.detach(), context
-    #     )
-
-    #     x0_recon = log_dict["x0_recon"]
-
-    #     context_loss = self._context_loss(x0_recon, x, x_mask, lambda_context)
-
-    #     print(
-    #         f"loss: {loss.item()}, context_loss: {context_loss.item()}, lambda_context: {lambda_context}"
-    #     )
-
-    #     loss += context_loss
-
-    #     return loss, log_dict
 
     def forward(self, x, x_mask, x_cond, context=None, lambda_fg=1.0, lambda_bg=1.0):
         # x = x_0 = franka image
@@ -114,10 +86,15 @@ class LatentBrownianBridgeModel(BrownianBridgeModel):
         x0_recon = log_dict["x0_recon"]
         decoded_image = self.decode(x0_recon, cond=False)
 
+        x_mask = x_mask.to(x0_recon.device)
+
+        # context_loss = self._context_loss(decoded_image, x, x_mask, lambda_context)
+    
         # Foreground: match robot B (target)
         foreground_loss = torch.nn.functional.l1_loss(
             decoded_image * x_mask, x * x_mask
         )
+        
         # Background: match background A (input)
         background_loss = torch.nn.functional.l1_loss(
             decoded_image * (1 - x_mask), x_cond * (1 - x_mask)
@@ -129,7 +106,47 @@ class LatentBrownianBridgeModel(BrownianBridgeModel):
             f"foreground_loss: {foreground_loss.item()}, background_loss: {background_loss.item()}"
         )
 
+        # print(
+        #     f"loss: {loss.item()}, context_loss: {context_loss.item()}, lambda_context: {lambda_context}"
+        # )
+
+        # loss += context_loss
+
         return loss, log_dict
+
+    # def forward(self, x, x_mask, x_cond, context=None, lambda_fg=1.0, lambda_bg=1.0):
+    #     # x = x_0 = franka image
+    #     # x_cond = x_T = xArm image
+
+    #     with torch.no_grad():
+    #         x_latent = self.encode(x, cond=False)
+    #         x_cond_latent = self.encode(x_cond, cond=True)
+
+    #     context = self.get_cond_stage_context(x_cond)  # None
+
+    #     _, log_dict = super().forward(
+    #         x_latent.detach(), x_cond_latent.detach(), context
+    #     )
+
+    #     x0_recon = log_dict["x0_recon"]
+    #     decoded_image = self.decode(x0_recon, cond=False)
+
+    #     # Foreground: match robot B (target)
+    #     foreground_loss = torch.nn.functional.l1_loss(
+    #         decoded_image * x_mask, x * x_mask
+    #     )
+    #     # Background: match background A (input)
+    #     background_loss = torch.nn.functional.l1_loss(
+    #         decoded_image * (1 - x_mask), x_cond * (1 - x_mask)
+    #     )
+
+    #     loss = lambda_fg * foreground_loss + lambda_bg * background_loss
+
+    #     print(
+    #         f"foreground_loss: {foreground_loss.item()}, background_loss: {background_loss.item()}"
+    #     )
+
+    #     return loss, log_dict
 
     def get_cond_stage_context(self, x_cond):
         if self.cond_stage_model is not None:
