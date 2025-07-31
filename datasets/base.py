@@ -2,7 +2,8 @@ from torch.utils.data import Dataset
 import torchvision.transforms as transforms
 from PIL import Image
 from pathlib import Path
-
+import os
+import torch
 
 class ImagePathDataset(Dataset):
     def __init__(
@@ -40,33 +41,43 @@ class ImagePathDataset(Dataset):
         )
 
         img_path = self.image_paths[index]
-        mask_path = self.target_mask_paths[index]
+        try:
+            mask_path = self.target_mask_paths[index]
+        except:
+            #print(f"Masks do not exist")
+            mask_path = None
 
         image = None
         mask = None
         try:
             image = Image.open(img_path)
-            mask = Image.open(mask_path)
         except BaseException as e:
             print(img_path)
 
         if not image.mode == "RGB":
             image = image.convert("RGB")
-        if mask and (not mask.mode == "L"):
-            mask = mask.convert("L")
+        
 
         image = transform(image)
-        mask = transform(mask)
 
+        if mask_path != None:
+            mask = Image.open(mask_path)
+            if mask and (not mask.mode == "L"):
+                mask = mask.convert("L")
+            mask = transform(mask)
+        else:
+            mask = torch.zeros((1, *self.image_size))
+
+        
         if self.to_normal:
             image = (image - 0.5) * 2.0
             image.clamp_(-1.0, 1.0)
 
-            mask = (mask - 0.5) * 2.0
-            mask.clamp_(-1.0, 1.0)
+            # mask = (mask - 0.5) * 2.0
+            # mask.clamp_(-1.0, 1.0)
 
         image_name = Path(img_path).stem
-        mask_name = Path(mask_path).stem if mask_path else None
+        mask_name = Path(mask_path).stem if mask_path else "jjj"
 
         # NOTE: mask and name are None in case of valid and test sets
         return image, image_name, mask, mask_name

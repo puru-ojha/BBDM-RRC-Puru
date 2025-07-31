@@ -19,7 +19,6 @@ from runners.utils import (
 from tqdm.autonotebook import tqdm
 from torchsummary import summary
 
-
 @Registers.runners.register_with_name("BBDMRunner")
 class BBDMRunner(DiffusionBaseRunner):
     def __init__(self, config):
@@ -211,11 +210,10 @@ class BBDMRunner(DiffusionBaseRunner):
         self.logger(self.net.cond_latent_std)
 
     def loss_fn(self, net, batch, epoch, step, opt_idx=0, stage="train", write=True):
-        (x, x_name, x_mask, _), (x_cond, x_cond_name, _, _) = batch
+        (x, x_name, x_mask, _), (x_cond, x_cond_name, x_cond_mask, _) = batch
         x = x.to(self.config.training.device[0])
         x_cond = x_cond.to(self.config.training.device[0])
-
-        loss, additional_info = net(x, x_mask, x_cond)
+        loss, additional_info = net(x, x_mask, x_cond, x_cond_mask, self.config.training.loss_type)
         if write and self.is_main_process:
             self.writer.add_scalar(f"loss/{stage}", loss, step)
             if additional_info.__contains__("recloss_noise"):

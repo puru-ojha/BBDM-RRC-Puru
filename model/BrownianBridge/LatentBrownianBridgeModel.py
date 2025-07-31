@@ -4,11 +4,11 @@ import random
 import torch
 import torch.nn as nn
 from tqdm.autonotebook import tqdm
-
+import cv2
+import numpy as np
 from model.BrownianBridge.BrownianBridgeModel import BrownianBridgeModel
 from model.BrownianBridge.base.modules.encoders.modules import SpatialRescaler
 from model.VQGAN.vqgan import VQModel
-
 
 def disabled_train(self, mode=True):
     """Overwrite model.train with this function to make sure train/eval mode
@@ -68,8 +68,33 @@ class LatentBrownianBridgeModel(BrownianBridgeModel):
         )
 
         return loss
+        
+    def resize_and_dilate_masks(self, masks, factor=4, kernel_size = 3, iterations = 3):
+        B, C, H, W = masks.shape
+        assert C == 1, "This function expects masks with 1 channel"
 
-    def forward(self, x, x_mask, x_cond, context=None, lambda_fg=1.0, lambda_bg=1.0):
+        new_H, new_W = H // factor, W // factor
+        resized_masks = []
+        kernel = np.ones((kernel_size, kernel_size), dtype=np.uint8)
+
+        for i in range(B):
+            # Convert tensor to numpy
+            mask_np = masks[i, 0].cpu().numpy().astype(np.uint8)
+
+            # Resize with nearest neighbor
+            resized_np = cv2.resize(mask_np, (new_W, new_H), interpolation=cv2.INTER_NEAREST)
+
+            # Apply dilation
+            dilated_np = cv2.dilate(resized_np, kernel, iterations=iterations)
+            dilated_float = (dilated_np > 0).astype(np.float32)
+            # Convert back to tensor and add channel dim
+            resized_tensor = torch.from_numpy(dilated_float).unsqueeze(0)  # shape: (1, new_H, new_W)
+            resized_masks.append(resized_tensor)
+
+        # Stack into batch
+        return torch.stack(resized_masks)  # shape: (B, 1, new_H, new_W)
+    
+    def forward(self, x, x_mask, x_cond, x_cond_mask, loss_type = 'general', context=None, lambda_fg=1.0, lambda_bg=1.0):
         # x = x_0 = franka image
         # x_cond = x_T = xArm image
 
@@ -78,26 +103,50 @@ class LatentBrownianBridgeModel(BrownianBridgeModel):
             x_cond_latent = self.encode(x_cond, cond=True)
 
         context = self.get_cond_stage_context(x_cond)  # None
+        latent_loss, log_dict = super().forward(x_latent.detach(), x_cond_latent.detach(), context, self.resize_and_dilate_masks(x_mask), self.resize_and_dilate_masks(x_cond_mask))
 
-        _, log_dict = super().forward(
-            x_latent.detach(), x_cond_latent.detach(), context
-        )
+        if loss_type == 'no-mask':
+            return latent_loss,log_dict
 
         x0_recon = log_dict["x0_recon"]
-        decoded_image = self.decode(x0_recon, cond=False)
 
-        x_mask = x_mask.to(x0_recon.device)
+        decoded_image = self.decode(x0_recon, cond=False)  
+
+        bin_x_mask = (x_mask > 0.5)
+        bin_x_cond_mask = (x_cond_mask > 0.5)
+
+        if loss_type == 'general':
+            fg_mask = bin_x_mask.to(device = x0_recon.device, dtype = torch.float32)
+            bg_mask = 1 - fg_mask
+
+        elif loss_type == 'union':
+            mask_union = torch.logical_or(bin_x_mask,bin_x_cond_mask)
+            fg_mask = mask_union.to(device = x0_recon.device, dtype = torch.float32)
+            bg_mask = 1 - fg_mask
+
+        else:
+            mask_union = torch.logical_or(bin_x_mask,bin_x_cond_mask)
+            fg_mask = bin_x_mask.to(device = x0_recon.device, dtype = torch.float32)
+            bg_mask = torch.logical_not(mask_union).to(device = x0_recon.device, dtype = torch.float32)
+
+        print(bin_x_mask)
+        print(fg_mask)
+        print(bin_x_cond_mask)
+        print(bg_mask)
+
+        # x_mask = x_mask.to(x0_recon.device)
+        # x_cond_mask = x_cond_mask.to(x0_recon.device)
 
         # context_loss = self._context_loss(decoded_image, x, x_mask, lambda_context)
     
         # Foreground: match robot B (target)
         foreground_loss = torch.nn.functional.l1_loss(
-            decoded_image * x_mask, x * x_mask
+            decoded_image * fg_mask, x * fg_mask
         )
         
         # Background: match background A (input)
         background_loss = torch.nn.functional.l1_loss(
-            decoded_image * (1 - x_mask), x_cond * (1 - x_mask)
+            decoded_image * bg_mask, x_cond * bg_mask
         )
 
         loss = lambda_fg * foreground_loss + lambda_bg * background_loss

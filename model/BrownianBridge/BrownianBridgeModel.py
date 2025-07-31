@@ -6,7 +6,6 @@ import torch.nn.functional as F
 from functools import partial
 from tqdm.autonotebook import tqdm
 import numpy as np
-
 from model.utils import extract, default
 from model.BrownianBridge.base.modules.diffusionmodules.openaimodel import UNetModel
 from model.BrownianBridge.base.modules.encoders.modules import SpatialRescaler
@@ -98,7 +97,7 @@ class BrownianBridgeModel(nn.Module):
     def get_parameters(self):
         return self.denoise_fn.parameters()
 
-    def forward(self, x, y, context=None):
+    def forward(self, x, y, context=None, franka_mask = None, xarm_mask = None):
         if self.condition_key == "nocond":
             context = None
         else:
@@ -117,9 +116,9 @@ class BrownianBridgeModel(nn.Module):
 
         t = torch.randint(0, self.num_timesteps, (b,), device=device).long()
 
-        return self.p_losses(x, y, context, t)
+        return self.p_losses(x, y, context, t, franka_mask = franka_mask, xarm_mask = xarm_mask)
 
-    def p_losses(self, x0, y, context, t, noise=None):
+    def p_losses(self, x0, y, context, t, franka_mask = None, xarm_mask = None, noise=None):
         """
         model loss
         :param x0: encoded x_ori, E(x_ori) = x0 
@@ -137,15 +136,27 @@ class BrownianBridgeModel(nn.Module):
 
         objective_recon = self.denoise_fn(x_t, timesteps=t, context=context)
 
+        if xarm_mask != None and franka_mask != None:
+            mask_union = torch.logical_or(franka_mask,xarm_mask)
+            fg_mask = franka_mask.to(device = objective.device, dtype = torch.float32)
+            bg_mask = torch.logical_not(mask_union).to(device = objective.device, dtype = torch.float32)
+        
+        x0_recon = self.predict_x0_from_objective(x_t, y, t, objective_recon) # x0_recon = x_t - objective_recon
+
+
         if self.loss_type == "l1":  # this is the default one !
-            recloss = (objective - objective_recon).abs().mean()
+            if xarm_mask != None and franka_mask != None:
+                bg_loss = ((x0_recon - y)*bg_mask).abs().mean()
+                fg_loss = ((objective - objective_recon)*fg_mask).abs().mean()
+                recloss = bg_loss + fg_loss
+            else:
+                recloss = (objective - objective_recon).abs().mean()
 
         elif self.loss_type == "l2":
             recloss = F.mse_loss(objective, objective_recon)
         else:
             raise NotImplementedError()
 
-        x0_recon = self.predict_x0_from_objective(x_t, y, t, objective_recon) # x0_recon = x_t - objective_recon
 
         log_dict = {"loss": recloss, "x0_recon": x0_recon}
 

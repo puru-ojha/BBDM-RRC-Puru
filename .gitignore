@@ -15,6 +15,8 @@ __pycache__/
 /green-bg-only-arm-results
 
 /configs
+ 
+/sim_2_real_split
 
 *.pyc
 __pycache__/
@@ -27,7 +29,10 @@ __pycache__/
 /arm-colored-results
 /lab-bg-replaced-data
 
+/results
 
+/bbdm_dataset_clean_test_set
+/both_arms_visible_dataset
 
 /zero-shot-results
 
@@ -36,3 +41,10 @@ __pycache__/
 /lab-bg-results
 /xarm-lab-pics
 
+/Simulation paired data - mask and images
+/cross-emb-dataset-real
+/cross-emb-dataset-real-masks
+/sim_2_real_split_filtered
+/cross-emb-real-masks
+
+/scratchbook
