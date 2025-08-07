@@ -2,6 +2,9 @@ import os
 
 
 def get_image_paths_from_dir(fdir):
+    if not os.path.exists(fdir):
+        print(f"The path {fdir} does not exits")
+        return None
     flist = os.listdir(fdir)
     flist.sort()
     image_paths = []

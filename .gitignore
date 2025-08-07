@@ -6,6 +6,7 @@ __pycache__/
 /sample_to_eval
 /results-2
 
+<<<<<<< HEAD
 /arm-green
 /data_small
 /green-bg-only-arm-results
@@ -13,3 +14,47 @@ __pycache__/
 /Simulation-mask-paired-data-small-local
 
 /test
+=======
+/mask-incorp-results
+/Simulation-mask-paired-data
+/arm-green
+/data_small
+
+/Simulation-mask-paired-data-small-local
+/green-bg-only-arm-results
+
+/configs
+ 
+/sim_2_real_split
+
+*.pyc
+__pycache__/
+**/__pycache__/
+
+/arm-colored
+/save-checkpoint-green-bg
+
+/test
+/arm-colored-results
+/lab-bg-replaced-data
+
+/results
+
+/bbdm_dataset_clean_test_set
+/both_arms_visible_dataset
+
+/zero-shot-results
+
+/lab-bg
+
+/lab-bg-results
+/xarm-lab-pics
+
+/Simulation paired data - mask and images
+/cross-emb-dataset-real
+/cross-emb-dataset-real-masks
+/sim_2_real_split_filtered
+/cross-emb-real-masks
+
+/scratchbook
+>>>>>>> b804a143fdfe46a9fbf72836f2f509df88dc8e28

@@ -2,34 +2,37 @@
 runner: "BBDMRunner"
 
 training:
-  n_epochs: 100
+  n_epochs: 1000
   n_steps: 200000
   save_interval: 2
   sample_interval: 2
   validation_interval: 2
   accumulate_grad_batches: 4
+  loss_type : 'no-mask' 
+  
+# choose from general (franka fg, not franka bg), union (franka and xarm fg, 1 - fg bg), union-diff (franka fg, 1 - (franka and xarm) bg) or no-mask
 
 testing:
   clip_denoised: False
   sample_num: 5
 
 data:
-  dataset_name: "xarm2panda"
+  dataset_name: "real_to_real_masks"
   dataset_type: "custom_aligned"
   dataset_config:
-    dataset_path: "/home/aniruth/Desktop/RRC/BBDM-RRC/Simulation-mask-paired-data-small-local" # change 2 rel path later
+    dataset_path: "cross-emb-real-masks" # change 2 rel path later
     image_size: 256
     channels: 3
     to_normal: True
     flip: False
   train:
-    batch_size: 1
-    shuffle: True
+    batch_size: 8
+    shuffle: False
   val:
-    batch_size: 1
-    shuffle: True
+    batch_size: 8
+    shuffle: False
   test:
-    batch_size: 1
+    batch_size: 8
     # shuffle: False
 
 model:
@@ -38,8 +41,8 @@ model:
   latent_before_quant_conv: False
   normalize_latent: False
   only_load_latent_mean_std: False
-  # model_load_path:  # model checkpoint path
-  # optim_sche_load_path:  # optimizer scheduler checkpoint path
+  model_load_path: "results/real_to_real_masks/LBBDM-f4/checkpoint/top_model_epoch_448.pth" # model checkpoint path
+  optim_sche_load_path: "results/real_to_real_masks/LBBDM-f4/checkpoint/top_optim_sche_epoch_448.pth" # optimizer scheduler checkpoint path
 
   EMA:
     use_ema: True
@@ -54,7 +57,7 @@ model:
 
   VQGAN:
     params:
-      ckpt_path: "/home/aniruth/Desktop/RRC/BBDM-RRC/results/pretrained-VQGAN/vq-f4/model.ckpt"
+      ckpt_path: "results/pretrained-VQGAN/vq-f4/model.ckpt"
       embed_dim: 3
       n_embed: 8192
       ddconfig:

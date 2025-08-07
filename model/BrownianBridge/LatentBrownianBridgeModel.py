@@ -4,11 +4,11 @@ import random
 import torch
 import torch.nn as nn
 from tqdm.autonotebook import tqdm
-
+import cv2
+import numpy as np
 from model.BrownianBridge.BrownianBridgeModel import BrownianBridgeModel
 from model.BrownianBridge.base.modules.encoders.modules import SpatialRescaler
 from model.VQGAN.vqgan import VQModel
-
 
 def disabled_train(self, mode=True):
     """Overwrite model.train with this function to make sure train/eval mode
@@ -27,12 +27,14 @@ class LatentBrownianBridgeModel(BrownianBridgeModel):
         print(f"load vqgan from {model_config.VQGAN.params.ckpt_path}")
 
         # Condition Stage Model
-        if self.condition_key == 'nocond':
+        if self.condition_key == "nocond":
             self.cond_stage_model = None
-        elif self.condition_key == 'first_stage':
+        elif self.condition_key == "first_stage":
             self.cond_stage_model = self.vqgan
-        elif self.condition_key == 'SpatialRescaler':
-            self.cond_stage_model = SpatialRescaler(**vars(model_config.CondStageParams))
+        elif self.condition_key == "SpatialRescaler":
+            self.cond_stage_model = SpatialRescaler(
+                **vars(model_config.CondStageParams)
+            )
         else:
             raise NotImplementedError
 
@@ -40,9 +42,11 @@ class LatentBrownianBridgeModel(BrownianBridgeModel):
         return self
 
     def get_parameters(self):
-        if self.condition_key == 'SpatialRescaler':
+        if self.condition_key == "SpatialRescaler":
             print("get parameters to optimize: SpatialRescaler, UNet")
-            params = itertools.chain(self.denoise_fn.parameters(), self.cond_stage_model.parameters())
+            params = itertools.chain(
+                self.denoise_fn.parameters(), self.cond_stage_model.parameters()
+            )
         else:
             print("get parameters to optimize: UNet")
             params = self.denoise_fn.parameters()
@@ -54,17 +58,149 @@ class LatentBrownianBridgeModel(BrownianBridgeModel):
             self.cond_stage_model.apply(weights_init)
         return self
 
-    def forward(self, x, x_cond, context=None):
+    def _context_loss(self, decoded_image, x, target_mask, lbda: float = 1.0):
+        
+        loss = (
+            torch.nn.functional.l1_loss(
+                decoded_image * (1 - target_mask), x * (1 - target_mask)
+            )
+            * lbda
+        )
+
+        return loss
+        
+    def resize_and_dilate_masks(self, masks, factor=4, kernel_size = 3, iterations = 3):
+        B, C, H, W = masks.shape
+        assert C == 1, "This function expects masks with 1 channel"
+
+        new_H, new_W = H // factor, W // factor
+        resized_masks = []
+        kernel = np.ones((kernel_size, kernel_size), dtype=np.uint8)
+
+        for i in range(B):
+            # Convert tensor to numpy
+            mask_np = masks[i, 0].cpu().numpy().astype(np.uint8)
+
+            # Resize with nearest neighbor
+            resized_np = cv2.resize(mask_np, (new_W, new_H), interpolation=cv2.INTER_NEAREST)
+
+            # Apply dilation
+            dilated_np = cv2.dilate(resized_np, kernel, iterations=iterations)
+            dilated_float = (dilated_np > 0).astype(np.float32)
+            # Convert back to tensor and add channel dim
+            resized_tensor = torch.from_numpy(dilated_float).unsqueeze(0)  # shape: (1, new_H, new_W)
+            resized_masks.append(resized_tensor)
+
+        # Stack into batch
+        return torch.stack(resized_masks)  # shape: (B, 1, new_H, new_W)
+    
+    def forward(self, x, x_mask, x_cond, x_cond_mask, loss_type = 'general', context=None, lambda_fg=1.0, lambda_bg=1.0):
+        # x = x_0 = franka image
+        # x_cond = x_T = xArm image
+
         with torch.no_grad():
             x_latent = self.encode(x, cond=False)
             x_cond_latent = self.encode(x_cond, cond=True)
-        context = self.get_cond_stage_context(x_cond)
-        return super().forward(x_latent.detach(), x_cond_latent.detach(), context)
+
+        context = self.get_cond_stage_context(x_cond)  # None
+        latent_loss, log_dict = super().forward(x_latent.detach(), x_cond_latent.detach(), context, self.resize_and_dilate_masks(x_mask), self.resize_and_dilate_masks(x_cond_mask))
+
+        if loss_type == 'no-mask':
+            return latent_loss,log_dict
+
+        x0_recon = log_dict["x0_recon"]
+
+        decoded_image = self.decode(x0_recon, cond=False)  
+
+        bin_x_mask = (x_mask > 0.5)
+        bin_x_cond_mask = (x_cond_mask > 0.5)
+
+        if loss_type == 'general':
+            fg_mask = bin_x_mask.to(device = x0_recon.device, dtype = torch.float32)
+            bg_mask = 1 - fg_mask
+
+        elif loss_type == 'union':
+            mask_union = torch.logical_or(bin_x_mask,bin_x_cond_mask)
+            fg_mask = mask_union.to(device = x0_recon.device, dtype = torch.float32)
+            bg_mask = 1 - fg_mask
+
+        else:
+            mask_union = torch.logical_or(bin_x_mask,bin_x_cond_mask)
+            fg_mask = bin_x_mask.to(device = x0_recon.device, dtype = torch.float32)
+            bg_mask = torch.logical_not(mask_union).to(device = x0_recon.device, dtype = torch.float32)
+
+        print(bin_x_mask)
+        print(fg_mask)
+        print(bin_x_cond_mask)
+        print(bg_mask)
+
+        # x_mask = x_mask.to(x0_recon.device)
+        # x_cond_mask = x_cond_mask.to(x0_recon.device)
+
+        # context_loss = self._context_loss(decoded_image, x, x_mask, lambda_context)
+    
+        # Foreground: match robot B (target)
+        foreground_loss = torch.nn.functional.l1_loss(
+            decoded_image * fg_mask, x * fg_mask
+        )
+        
+        # Background: match background A (input)
+        background_loss = torch.nn.functional.l1_loss(
+            decoded_image * bg_mask, x_cond * bg_mask
+        )
+
+        loss = lambda_fg * foreground_loss + lambda_bg * background_loss
+
+        print(
+            f"foreground_loss: {foreground_loss.item()}, background_loss: {background_loss.item()}"
+        )
+
+        # print(
+        #     f"loss: {loss.item()}, context_loss: {context_loss.item()}, lambda_context: {lambda_context}"
+        # )
+
+        # loss += context_loss
+
+        return loss, log_dict
+
+    # def forward(self, x, x_mask, x_cond, context=None, lambda_fg=1.0, lambda_bg=1.0):
+    #     # x = x_0 = franka image
+    #     # x_cond = x_T = xArm image
+
+    #     with torch.no_grad():
+    #         x_latent = self.encode(x, cond=False)
+    #         x_cond_latent = self.encode(x_cond, cond=True)
+
+    #     context = self.get_cond_stage_context(x_cond)  # None
+
+    #     _, log_dict = super().forward(
+    #         x_latent.detach(), x_cond_latent.detach(), context
+    #     )
+
+    #     x0_recon = log_dict["x0_recon"]
+    #     decoded_image = self.decode(x0_recon, cond=False)
+
+    #     # Foreground: match robot B (target)
+    #     foreground_loss = torch.nn.functional.l1_loss(
+    #         decoded_image * x_mask, x * x_mask
+    #     )
+    #     # Background: match background A (input)
+    #     background_loss = torch.nn.functional.l1_loss(
+    #         decoded_image * (1 - x_mask), x_cond * (1 - x_mask)
+    #     )
+
+    #     loss = lambda_fg * foreground_loss + lambda_bg * background_loss
+
+    #     print(
+    #         f"foreground_loss: {foreground_loss.item()}, background_loss: {background_loss.item()}"
+    #     )
+
+    #     return loss, log_dict
 
     def get_cond_stage_context(self, x_cond):
         if self.cond_stage_model is not None:
             context = self.cond_stage_model(x_cond)
-            if self.condition_key == 'first_stage':
+            if self.condition_key == "first_stage":
                 context = context.detach()
         else:
             context = None
@@ -72,7 +208,9 @@ class LatentBrownianBridgeModel(BrownianBridgeModel):
 
     @torch.no_grad()
     def encode(self, x, cond=True, normalize=None):
-        normalize = self.model_config.normalize_latent if normalize is None else normalize
+        normalize = (
+            self.model_config.normalize_latent if normalize is None else normalize
+        )
         model = self.vqgan
         x_latent = model.encoder(x)
         if not self.model_config.latent_before_quant_conv:
@@ -84,9 +222,10 @@ class LatentBrownianBridgeModel(BrownianBridgeModel):
                 x_latent = (x_latent - self.ori_latent_mean) / self.ori_latent_std
         return x_latent
 
-    @torch.no_grad()
     def decode(self, x_latent, cond=True, normalize=None):
-        normalize = self.model_config.normalize_latent if normalize is None else normalize
+        normalize = (
+            self.model_config.normalize_latent if normalize is None else normalize
+        )
         if normalize:
             if cond:
                 x_latent = x_latent * self.cond_latent_std + self.cond_latent_mean
@@ -103,30 +242,44 @@ class LatentBrownianBridgeModel(BrownianBridgeModel):
     def sample(self, x_cond, clip_denoised=False, sample_mid_step=False):
         x_cond_latent = self.encode(x_cond, cond=True)
         if sample_mid_step:
-            temp, one_step_temp = self.p_sample_loop(y=x_cond_latent,
-                                                     context=self.get_cond_stage_context(x_cond),
-                                                     clip_denoised=clip_denoised,
-                                                     sample_mid_step=sample_mid_step)
+            temp, one_step_temp = self.p_sample_loop(
+                y=x_cond_latent,
+                context=self.get_cond_stage_context(x_cond),
+                clip_denoised=clip_denoised,
+                sample_mid_step=sample_mid_step,
+            )
             out_samples = []
-            for i in tqdm(range(len(temp)), initial=0, desc="save output sample mid steps", dynamic_ncols=True,
-                          smoothing=0.01):
+            for i in tqdm(
+                range(len(temp)),
+                initial=0,
+                desc="save output sample mid steps",
+                dynamic_ncols=True,
+                smoothing=0.01,
+            ):
                 with torch.no_grad():
                     out = self.decode(temp[i].detach(), cond=False)
-                out_samples.append(out.to('cpu'))
+                out_samples.append(out.to("cpu"))
 
             one_step_samples = []
-            for i in tqdm(range(len(one_step_temp)), initial=0, desc="save one step sample mid steps",
-                          dynamic_ncols=True,
-                          smoothing=0.01):
+            for i in tqdm(
+                range(len(one_step_temp)),
+                initial=0,
+                desc="save one step sample mid steps",
+                dynamic_ncols=True,
+                smoothing=0.01,
+            ):
                 with torch.no_grad():
                     out = self.decode(one_step_temp[i].detach(), cond=False)
-                one_step_samples.append(out.to('cpu'))
+                one_step_samples.append(out.to("cpu"))
             return out_samples, one_step_samples
         else:
-            temp = self.p_sample_loop(y=x_cond_latent,
-                                      context=self.get_cond_stage_context(x_cond),
-                                      clip_denoised=clip_denoised,
-                                      sample_mid_step=sample_mid_step)
+            # model's output (domain Y) during evals
+            temp = self.p_sample_loop(
+                y=x_cond_latent,
+                context=self.get_cond_stage_context(x_cond),
+                clip_denoised=clip_denoised,
+                sample_mid_step=sample_mid_step,
+            )
             x_latent = temp
             out = self.decode(x_latent, cond=False)
             return out

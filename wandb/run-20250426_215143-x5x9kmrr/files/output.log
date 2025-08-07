@@ -1,0 +1,17 @@
+BBDMRunner
+start training LBBDM-f4 on xarm2panda, 0 iters per epoch
+0it [00:00, ?it/s]
+training time: 0:00:00
+str(Exception):	 <class 'Exception'>
+str(e):		 local variable 'losses' referenced before assignment
+repr(e):	 UnboundLocalError("local variable 'losses' referenced before assignment")
+traceback.print_exc():
+Traceback (most recent call last):
+  File "/home/aniruth/Desktop/RRC/BBDM-RRC/runners/BaseRunner.py", line 474, in train
+    epoch_loss = sum(losses) / len(losses) # loss for 1 full epoch !
+UnboundLocalError: local variable 'losses' referenced before assignment
+traceback.format_exc():
+Traceback (most recent call last):
+  File "/home/aniruth/Desktop/RRC/BBDM-RRC/runners/BaseRunner.py", line 474, in train
+    epoch_loss = sum(losses) / len(losses) # loss for 1 full epoch !
+UnboundLocalError: local variable 'losses' referenced before assignment

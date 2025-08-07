@@ -1,0 +1,51 @@
+{
+  "os": "Linux-6.8.0-57-generic-x86_64-with-glibc2.35",
+  "python": "CPython 3.9.16",
+  "startedAt": "2025-04-26T16:21:43.489321Z",
+  "args": [
+    "--config",
+    "/home/aniruth/Desktop/RRC/BBDM-RRC/configs/Template-LBBDM-f4-v.yaml",
+    "--train",
+    "--sample_at_start",
+    "--save_top",
+    "--gpu_ids",
+    "0"
+  ],
+  "program": "/home/aniruth/Desktop/RRC/BBDM-RRC/main.py",
+  "codePath": "main.py",
+  "git": {
+    "remote": "git@github.com:AniruthSuresh/BBDM-RRC.git",
+    "commit": "0f03d4a0db1bedba867c7f95f775f7e32e70ebea"
+  },
+  "email": "aniruthzlatan@gmail.com",
+  "root": "/home/aniruth/Desktop/RRC/BBDM-RRC",
+  "host": "aniruth-LOQ",
+  "executable": "/home/aniruth/miniconda3/envs/BBDM/bin/python3",
+  "codePathLocal": "main.py",
+  "cpu_count": 14,
+  "cpu_count_logical": 20,
+  "gpu": "NVIDIA GeForce RTX 4060 Laptop GPU",
+  "gpu_count": 1,
+  "disk": {
+    "/": {
+      "total": "475251507200",
+      "used": "45587140608"
+    }
+  },
+  "memory": {
+    "total": "24890470400"
+  },
+  "cpu": {
+    "count": 14,
+    "countLogical": 20
+  },
+  "gpu_nvidia": [
+    {
+      "name": "NVIDIA GeForce RTX 4060 Laptop GPU",
+      "memoryTotal": "8585740288",
+      "cudaCores": 3072,
+      "architecture": "Ada"
+    }
+  ],
+  "cudaVersion": "12.8"
+}
